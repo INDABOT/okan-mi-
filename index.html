@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Small Apology for Ada</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='90' font-size='90'>💖</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Replicating Framer Motion's fade-in with CSS */
+        .fade-in-init { opacity: 0; transform: translateY(10px); }
+        .fade-in-active { opacity: 1; transform: translateY(0); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        
+        /* Replicating Framer Motion's whileInView */
+        .in-view-init { opacity: 0; transform: translateY(10px); }
+        .in-view-active { opacity: 1; transform: translateY(0); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+        .scale-in-init { opacity: 0; transform: scale(0.95); }
+        .scale-in-active { opacity: 1; transform: scale(1); transition: opacity 0.4s ease-out, transform 0.4s ease-out; }
+
+        /* Custom Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .float-animation { animation: float 2.2s infinite ease-in-out; }
+
+        /* Heart Puzzle animation */
+        .puzzle-solved { animation: pulse 1s infinite; }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Celebration animation */
+        .confetti-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgb(244 63 94); /* rose-500 */
+            border-radius: 9999px;
+            opacity: 0;
+            animation: burst 0.9s ease-out forwards;
+        }
+        @keyframes burst {
+            to {
+                opacity: 1;
+                transform: translateX(var(--x)) translateY(var(--y));
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-b from-amber-50 via-rose-50 to-amber-100 text-neutral-800 relative overflow-x-hidden">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        amber: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                        },
+                        rose: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            200: '#fecdd3',
+                            300: '#fda4af',
+                            400: '#fb7185',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                        },
+                        neutral: {
+                            200: '#e5e5e5',
+                            500: '#a3a3a3',
+                            600: '#737373',
+                            700: '#525252',
+                            800: '#262626',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <div class="pointer-events-none fixed inset-0 -z-10 opacity-40" id="star-container"></div>
+    
+    <audio id="background-music" src="https://music.youtube.com/watch?v=rn1ph-gmoLA&si=IjfG7X_ka45_bYGC" loop preload="none"></audio>
+
+    <header class="sticky top-0 z-40 backdrop-blur bg-amber-50/70 border-b border-amber-200/60">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3 justify-between">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                <span class="font-medium tracking-wide">for Ada</span>
+            </div>
+            <nav class="hidden sm:flex items-center gap-4 text-sm">
+                <a href="#memories" class="hover:underline">Memories</a>
+                <a href="#letter" class="hover:underline">My Apology</a>
+                <a href="#reasons" class="hover:underline">Why You</a>
+                <a href="#games" class="hover:underline">Little Games</a>
+                <a href="#final" class="hover:underline">Final Note</a>
+            </nav>
+            <div class="flex items-center gap-2">
+                <button id="music-toggle" class="rounded-2xl inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 hover:bg-neutral-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1 lucide lucide-play"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span class="hidden sm:inline">Play music</span>
+                    <span class="sm:hidden">Music</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section id="hero" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">
+        <div class="text-center max-w-3xl mx-auto">
+            <div class="fade-in-init" style="transition-delay: 0s;">
+                <h1 class="text-4xl sm:text-5xl font-light tracking-tight">
+                    This isn’t just a website—
+                    <span class="block">it’s my heart speaking to you.</span>
+                </h1>
+            </div>
+            <div class="fade-in-init" style="transition-delay: 0.25s;">
+                <p class="mt-4 text-neutral-600">
+                    I made this for you, Ada. If you’re willing, walk through it with me.
+                </p>
+            </div>
+
+            <div id="name-gate" class="fade-in-init" style="transition-delay: 0.35s;">
+                <div class="rounded-2xl shadow-md border-0 bg-amber-50/70 backdrop-blur mt-6 p-6">
+                    <div class="flex flex-col sm:flex-row items-center gap-3">
+                        <input id="name-input" type="text" placeholder="Type your name to enter…" class="flex-1 px-3 py-2 text-sm bg-white/80 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-300">
+                        <button id="enter-button" class="rounded-2xl inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-rose-500 text-rose-50 hover:bg-rose-600 h-9 px-4 py-2">
+                            Enter
+                        </button>
+                    </div>
+                    <p id="name-error" class="text-sm text-rose-500 mt-2 hidden">Hmm… that doesn’t look like Ada. Try again? 🙂</p>
+                </div>
+            </div>
+
+            <div class="mt-8 float-animation">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+        </div>
+    </section>
+
+    <div id="locked-content" class="opacity-30 pointer-events-none select-none transition-opacity duration-500">
+        
+        <section id="memories" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="fade-in-init">
+                <div class="flex items-center gap-2 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 lucide lucide-image-icon"><path d="M21 9v6h-4l-1-1H3V5h13l1 1h4V9Z"/><path d="M3 13v4h16l1-1h4v-2h-3"/><circle cx="11.5" cy="9.5" r="2.5"/><circle cx="11.5" cy="11.5" r="2.5"/></svg>
+                    <h2 class="text-2xl font-light">Our little timeline</h2>
+                </div>
+            </div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div class="in-view-init" style="transition-delay: 0s;">
+                    <div class="rounded-2xl shadow-md border-0 bg-amber-50/70 backdrop-blur p-6">
+                        <div class="text-xs text-neutral-500 mb-2">2/14/2024</div>
+                        <div class="font-medium mb-1">Our first real laugh attack</div>
+                        <div class="text-sm text-neutral-600 mb-3">We laughed so hard my cheeks hurt for hours.</div>
+                        <div class="rounded-xl overflow-hidden bg-white/60">
+                            <video controls class="w-full h-56 object-cover">
+                                <source src="https://cdn.coverr.co/videos/coverr-two-people-laughing-1067/1080p.mp4" />
+                            </video>
+                        </div>
+                    </div>
+                </div>
+                <div class="in-view-init" style="transition-delay: 0.05s;">
+                    <div class="rounded-2xl shadow-md border-0 bg-amber-50/70 backdrop-blur p-6">
+                        <div class="text-xs text-neutral-500 mb-2">4/20/2024</div>
+                        <div class="font-medium mb-1">That yellow dress + sunshine</div>
+                        <div class="text-sm text-neutral-600 mb-3">You looked like spring had a favorite.</div>
+                        <div class="rounded-xl overflow-hidden bg-white/60">
+                            <img src="https://images.unsplash.com/photo-1524253482453-3fed8d2fe12b?auto=format&fit=crop&w=1200&q=60" alt="That yellow dress + sunshine" class="w-full h-56 object-cover"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="in-view-init" style="transition-delay: 0.1s;">
+                    <div class="rounded-2xl shadow-md border-0 bg-amber-50/70 backdrop-blur p-6">
+                        <div class="text-xs text-neutral-500 mb-2">6/1/2024</div>
+                        <div class="font-medium mb-1">Late‑night call</div>
+                        <div class="text-sm text-neutral-600 mb-3">Your voice at 1:23am—soft, sleepy, unforgettable.</div>
+                        <div class="rounded-xl overflow-hidden bg-white/60 p-4 flex items-center gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 lucide lucide-mic"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                            <audio controls class="w-full">
+                                <source src="https://music.youtube.com/watch?v=rn1ph-gmoLA&si=IjfG7X_ka45_bYGC" />
+                            </audio>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="letter" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="fade-in-init">
+                <div class="flex items-center gap-2 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 lucide lucide-music-2"><path d="M21 17V5l-8 5-8-5v12l8 5 8-5z"/><path d="M11 5v12"/><path d="M12 17v5"/></svg>
+                    <h2 class="text-2xl font-light">My apology letter</h2>
+                </div>
+            </div>
+            <div class="rounded-2xl shadow-md border-0 bg-amber-50/70 backdrop-blur p-6">
+                <p class="whitespace-pre-wrap leading-relaxed text-neutral-700 font-light">
+I’m sorry. I mishandled us, and you didn’t deserve the weight of my mistakes.
+I’ve had time to sit with myself and I realize how rare and gentle your love is.
+I miss your laughter, your calm, the way your presence makes every room feel lighter.
+If you’re willing, I want to rebuild slowly and show up better—consistently.
+No big promises, just small ones I can keep: respect, patience, honesty.
+You are treasured. And I am learning how to love you right.
+                </p>
+                <div class="mt-4 flex items-center gap-3 text-sm text-neutral-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> from [Your Name]
+                </div>
+            </div>
+        </section>
+
+        <section id="reasons" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="fade-in-init">
+                <div class="flex items-center gap-2 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 lucide lucide-sparkles"><path d="m12 3-1.9 4.3-4.3 1.9 4.3 1.9 1.9 4.3 1.9-4.3 4.3-1.9-4.3-1.9-1.9-4.3z"/></svg>
+                    <h2 class="text-2xl font-light">A few reasons I adore you</h2>
+                </div>
+            </div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div class="scale-in-init" style="transition-delay: 0s;">
+                    <div class="rounded-2xl bg-white/80 shadow-sm border-0 p-5">
+                        <p class="text-neutral-700">You ask the kindest follow‑up questions.</p>
+                    </div>
+                </div>
+                <div class="scale-in-init" style="transition-delay: 0.05s;">
+                    <div class="rounded-2xl bg-white/80 shadow-sm border-0 p-5">
+                        <p class="text-neutral-700">Your laugh makes me forget every bad day.</p>
+                    </div>
+                </div>
+                <div class="scale-in-init" style="transition-delay: 0.1s;">
+                    <div class="rounded-2xl bg-white/80 shadow-sm border-0 p-5">
+                        <p class="text-neutral-700">You remember tiny details about people.</p>
+                    </div>
+                </div>
+                <div class="scale-in-init" style="transition-delay: 0.15s;">
+                    <div class="rounded-2xl bg-white/80 shadow-sm border-0 p-5">
+                        <p class="text-neutral-700">The courage in your softness.</p>
+                    </div>
+                </div>
+                <div class="scale-in-init" style="transition-delay: 0.2s;">
+                    <div class="rounded-2xl bg-white/80 shadow-sm border-0 p-5">
+                        <p class="text-neutral-700">The way you dream out loud and then make it real.</p>
+                    </div>
+                </div>
+                <div class="scale-in-init" style="transition-delay: 0.25s;">
+                    <div class="rounded-2xl bg-white/80 shadow-sm border-0 p-5">
+                        <p class="text-neutral-700">You make ordinary moments feel cinematic.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="games" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div class="fade-in-init">
+                <h2 class="text-2xl font-light mb-6">Little interactive things</h2>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-6">
+                <div class="rounded-2xl shadow-md border-0 bg-amber-50/70 backdrop-blur p-6">
+                    <h3 class="font-medium text-lg">1) Name Gate Bonus</h3>
+                    <div class="px-0">
+                        <p class="text-sm text-neutral-600">Since you made it in, here’s a tiny prize: a promise. I’ll say your name with more care than ever before.</p>
+                    </div>
+                </div>
+                
+                <div class="rounded-2xl shadow-md border-0 bg-amber-50/70 backdrop-blur p-6">
+                    <h3 class="font-medium text-lg">2) Why should you date me (again)?</h3>
+                    <div id="why-date-you" class="px-0">
+                        <div class="space-y-2">
+                            <button data-detail="I’ve built routines to show up better: messages, dates we plan together, and check-ins." class="why-button w-full text-left p-3 rounded-xl border bg-white/80 border-neutral-200 hover:bg-white">
+                                <div class="font-medium">I’m consistent now</div>
+                                <p class="detail-text text-sm text-neutral-600 mt-1 hidden"></p>
+                            </button>
+                            <button data-detail="I’ll reflect back what I hear so you feel understood—not defended against." class="why-button w-full text-left p-3 rounded-xl border bg-white/80 border-neutral-200 hover:bg-white">
+                                <div class="font-medium">I listen fully</div>
+                                <p class="detail-text text-sm text-neutral-600 mt-1 hidden"></p>
+                            </button>
+                            <button data-detail="We go at your pace; consent and comfort above all." class="why-button w-full text-left p-3 rounded-xl border bg-white/80 border-neutral-200 hover:bg-white">
+                                <div class="font-medium">I respect boundaries</div>
+                                <p class="detail-text text-sm text-neutral-600 mt-1 hidden"></p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl shadow-md border-0 bg-amber-50/70 backdrop-blur p-6">
+                    <h3 class="font-medium text-lg">3) Best person in the world competition</h3>
+                    <div id="best-person-game" class="px-0">
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="vote-button rounded-2xl inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-9 px-4 py-2 bg-neutral-200 text-neutral-900 hover:bg-neutral-300">Ada</button>
+                            <button class="vote-button rounded-2xl inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-9 px-4 py-2 bg-neutral-200 text-neutral-900 hover:bg-neutral-300">[Your Name] (nice try)</button>
+                            <button class="vote-button rounded-2xl inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-9 px-4 py-2 bg-neutral-200 text-neutral-900 hover:bg-neutral-300">Puppies</button>
+                            <button class="vote-button rounded-2xl inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-9 px-4 py-2 bg-neutral-200 text-neutral-900 hover:bg-neutral-300">Tie</button>
+                        </div>
+                        <p id="vote-result" class="text-sm text-neutral-600 mt-3 hidden"></p>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl shadow-md border-0 bg-amber-50/70 backdrop-blur p-6">
+                    <h3 class="font-medium text-lg">4) Fix my broken heart</h3>
+                    <div class="px-0">
+                        <div id="puzzle-container" class="flex gap-3 items-center">
+                            <button data-index="0" class="puzzle-button w-20 h-20 text-3xl grid place-content-center rounded-2xl bg-white/80 border border-neutral-200">💔</button>
+                            <button data-index="1" class="puzzle-button w-20 h-20 text-3xl grid place-content-center rounded-2xl bg-white/80 border border-neutral-200">🫶</button>
+                            <button data-index="2" class="puzzle-button w-20 h-20 text-3xl grid place-content-center rounded-2xl bg-white/80 border border-neutral-200">❤</button>
+                        </div>
+                        <p id="puzzle-solved-text" class="mt-3 text-sm text-rose-600 hidden">You did it. Thank you for giving my heart a new shape.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="final" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="rounded-2xl shadow-md border-0 bg-amber-50/70 backdrop-blur p-6">
+                <div class="text-center">
+                    <h3 class="text-3xl font-light">So here I am—imperfect, but yours if you’ll have me back.</h3>
+                    <p class="mt-2 text-neutral-600">If you’d like, we can start with a walk and a conversation. No pressure, just presence.</p>
+                    <div class="mt-6 flex items-center justify-center gap-3 relative">
+                        <button id="yes-button" class="rounded-2xl px-6 h-9 py-2 inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-rose-500 text-rose-50 hover:bg-rose-600">Yes 💖</button>
+                        <button id="avoid-button" class="rounded-2xl px-6 py-2 border bg-white/90 hover:bg-white shadow-sm transition">No 😢</button>
+                    </div>
+                </div>
+            </div>
+            <div id="celebrate" class="hidden mt-8">
+                <div class="grid place-content-center">
+                    <h4 class="text-2xl font-light mb-2">Thank you for the second chance.</h4>
+                    <p class="text-neutral-600">How about a small date: coffee + a walk this week?</p>
+                </div>
+                <div id="confetti-container" class="relative h-20 overflow-visible"></div>
+            </div>
+        </section>
+        
+        <section id="eggs" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-wrap gap-3 justify-center">
+                <button class="egg-button px-4 py-2 rounded-2xl border bg-white/80 shadow-sm text-sm hover:bg-white transition" data-text="If warm light could choose a face, it would pick yours.">(click) a tiny secret</button>
+                <button class="egg-button px-4 py-2 rounded-2xl border bg-white/80 shadow-sm text-sm hover:bg-white transition" data-text="You are proof that gentleness is powerful.">(click) a tiny secret</button>
+                <button class="egg-button px-4 py-2 rounded-2xl border bg-white/80 shadow-sm text-sm hover:bg-white transition" data-text="Every song gets jealous of how you stay stuck in my head.">(click) a tiny secret</button>
+                <button class="egg-button px-4 py-2 rounded-2xl border bg-white/80 shadow-sm text-sm hover:bg-white transition" data-text="I want to grow where you’re planted.">(click) a tiny secret</button>
+            </div>
+        </section>
+
+        <footer class="py-10 text-center text-xs text-neutral-500">
+            <p>Made with patience and honesty • 2024</p>
+        </footer>
+    </div>
+    
+    <script>
+        // --- Editable Content (Hardcoded from React) ---
+        const HER_NAME = "Ada";
+        const YOUR_NAME = "[Your Name]";
+        const APOLOGY_LETTER = `
+I’m sorry. I mishandled us, and you didn’t deserve the weight of my mistakes.
+I’ve had time to sit with myself and I realize how rare and gentle your love is.
+I miss your laughter, your calm, the way your presence makes every room feel lighter.
+If you’re willing, I want to rebuild slowly and show up better—consistently.
+No big promises, just small ones I can keep: respect, patience, honesty.
+You are treasured. And I am learning how to love you right.
+`;
+        const REASONS = [
+            "You ask the kindest follow‑up questions.",
+            "Your laugh makes me forget every bad day.",
+            "You remember tiny details about people.",
+            "The courage in your softness.",
+            "The way you dream out loud and then make it real.",
+            "You make ordinary moments feel cinematic.",
+        ];
+        const EASTER_EGGS = [
+            "If warm light could choose a face, it would pick yours.",
+            "You are proof that gentleness is powerful.",
+            "Every song gets jealous of how you stay stuck in my head.",
+            "I want to grow where you’re planted.",
+        ];
+        // --- End of Editable Content ---
+        
+        // --- Main JS Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const lockedContent = document.getElementById('locked-content');
+            const nameInput = document.getElementById('name-input');
+            const enterButton = document.getElementById('enter-button');
+            const nameError = document.getElementById('name-error');
+            const musicToggle = document.getElementById('music-toggle');
+            const backgroundMusic = document.getElementById('background-music');
+            const body = document.body;
+            
+            // Initial Fade-in Animation
+            document.querySelectorAll('.fade-in-init').forEach(el => {
+                setTimeout(() => {
+                    el.classList.remove('fade-in-init');
+                    el.classList.add('fade-in-active');
+                }, parseFloat(el.style.transitionDelay) * 1000);
+            });
+
+            // In-View Animations
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        const delay = parseFloat(el.style.transitionDelay) || 0;
+                        setTimeout(() => {
+                            el.classList.remove('in-view-init', 'scale-in-init');
+                            el.classList.add('in-view-active', 'scale-in-active');
+                        }, delay * 1000);
+                        observer.unobserve(el);
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.in-view-init, .scale-in-init').forEach(el => observer.observe(el));
+
+            // Name Gate
+            enterButton.addEventListener('click', () => {
+                if (nameInput.value.trim().toLowerCase() === HER_NAME.toLowerCase()) {
+                    lockedContent.classList.remove('opacity-30', 'pointer-events-none', 'select-none');
+                    lockedContent.classList.add('opacity-100', 'pointer-events-auto');
+                    nameError.classList.add('hidden');
+                } else {
+                    nameError.classList.remove('hidden');
+                }
+            });
+
+            // Music Player
+            let isPlaying = false;
+            musicToggle.addEventListener('click', () => {
+                if (isPlaying) {
+                    backgroundMusic.pause();
+                    musicToggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1 lucide lucide-play"><polygon points="5 3 19 12 5 21 5 3"/></svg><span class="hidden sm:inline">Play music</span><span class="sm:hidden">Music</span>';
+                } else {
+                    backgroundMusic.play();
+                    musicToggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1 lucide lucide-pause"><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></svg><span class="hidden sm:inline">Pause music</span><span class="sm:hidden">Music</span>';
+                }
+                isPlaying = !isPlaying;
+            });
+            
+            // Why Date You? Game
+            document.querySelectorAll('.why-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.why-button').forEach(btn => {
+                        btn.classList.remove('bg-amber-100', 'border-amber-300');
+                        btn.classList.add('bg-white/80', 'border-neutral-200', 'hover:bg-white');
+                        btn.querySelector('.detail-text').classList.add('hidden');
+                    });
+                    button.classList.remove('bg-white/80', 'border-neutral-200', 'hover:bg-white');
+                    button.classList.add('bg-amber-100', 'border-amber-300');
+                    const detailText = button.querySelector('.detail-text');
+                    detailText.textContent = button.dataset.detail;
+                    detailText.classList.remove('hidden');
+                });
+            });
+
+            // Best Person Game
+            const voteResult = document.getElementById('vote-result');
+            document.querySelectorAll('.vote-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.vote-button').forEach(btn => {
+                        btn.classList.remove('bg-rose-500', 'text-rose-50', 'hover:bg-rose-600');
+                        btn.classList.add('bg-neutral-200', 'text-neutral-900', 'hover:bg-neutral-300');
+                    });
+                    button.classList.remove('bg-neutral-200', 'text-neutral-900', 'hover:bg-neutral-300');
+                    button.classList.add('bg-rose-500', 'text-rose-50', 'hover:bg-rose-600');
+                    voteResult.textContent = `You voted: ${button.textContent}. Correct answer was ${HER_NAME} 😌`;
+                    voteResult.classList.remove('hidden');
+                });
+            });
+
+            // Heart Puzzle Game
+            const puzzleButtons = document.querySelectorAll('.puzzle-button');
+            const puzzleSolvedText = document.getElementById('puzzle-solved-text');
+            const slices = ["💔", "🫶", "❤"];
+            let order = [0, 1, 2];
+            
+            // Randomly shuffle initial order
+            for (let i = order.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [order[i], order[j]] = [order[j], order[i]];
+            }
+            order.forEach((idx, i) => puzzleButtons[i].textContent = slices[idx]);
+            
+            puzzleButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const i = parseInt(button.dataset.index);
+                    const j = (i + 1) % order.length;
+                    [order[i], order[j]] = [order[j], order[i]];
+                    puzzleButtons.forEach((btn, index) => {
+                        btn.textContent = slices[order[index]];
+                    });
+
+                    if (JSON.stringify(order) === JSON.stringify([2, 1, 0])) {
+                        puzzleSolvedText.classList.remove('hidden');
+                        puzzleButtons.forEach(btn => btn.classList.add('puzzle-solved'));
+                    } else {
+                        puzzleSolvedText.classList.add('hidden');
+                        puzzleButtons.forEach(btn => btn.classList.remove('puzzle-solved'));
+                    }
+                });
+            });
+
+            // Avoid Button
+            const avoidButton = document.getElementById('avoid-button');
+            avoidButton.addEventListener('mouseenter', () => {
+                const x = Math.random() * 160 - 80;
+                const y = Math.random() * 80 - 40;
+                avoidButton.style.transform = `translate(${x}px, ${y}px)`;
+            });
+
+            // Yes Button & Celebration
+            const yesButton = document.getElementById('yes-button');
+            const celebrateSection = document.getElementById('celebrate');
+            const confettiContainer = document.getElementById('confetti-container');
+            yesButton.addEventListener('click', () => {
+                celebrateSection.classList.remove('hidden');
+                // Generate confetti
+                for(let i = 0; i < 60; i++) {
+                    const dot = document.createElement('div');
+                    dot.classList.add('confetti-dot');
+                    dot.style.setProperty('--x', `${(Math.random() * 40 - 20)}px`);
+                    dot.style.setProperty('--y', `${(Math.random() * 12 - 6)}px`);
+                    dot.style.transitionDelay = `${Math.random() * 0.2}s`;
+                    confettiContainer.appendChild(dot);
+                }
+            });
+
+            // Easter Eggs
+            document.querySelectorAll('.egg-button').forEach(button => {
+                let isOpen = false;
+                const originalText = button.textContent;
+                button.addEventListener('click', () => {
+                    isOpen = !isOpen;
+                    button.textContent = isOpen ? button.dataset.text : originalText;
+                });
+            });
+            
+            // Floating Stars
+            const starContainer = document.getElementById('star-container');
+            const starSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+            for (let i = 0; i < 12; i++) {
+                const star = document.createElement('div');
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                const duration = 3 + Math.random() * 6;
+                const distance = 6 + Math.random() * 10;
+                star.className = 'absolute';
+                star.style.left = `${x}%`;
+                star.style.top = `${y}%`;
+                star.style.animation = `float ${duration}s infinite ease-in-out`;
+                star.style.setProperty('--float-dist', `${distance}px`);
+                star.innerHTML = starSvg;
+                starContainer.appendChild(star);
+            }
+        });
+    </script>
+</body>
+</html>
